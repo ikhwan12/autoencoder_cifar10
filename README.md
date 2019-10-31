@@ -36,4 +36,4 @@ Simply run this script.
 $ python result_to_csv.py --json your/json/file --acc <file_name_accuracy> --loss <file_name_loss>
 ```
 ## Report
-You can see the report on online version by visiting this [link](https://www.ikhwanmiqbal.com/cifar10_classification) or you can download the offline version [here](https://bre.is/JfzduUye)
+You can see the report on online version by visiting this [link](https://www.ikhwanmiqbal.com/cifar10_classification) or you can download the offline version [here](https://bre.is/Se9QV9ZE)
