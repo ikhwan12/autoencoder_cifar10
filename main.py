@@ -68,32 +68,32 @@ def test(lb, ub, model_path='cnn_autoencoder.h5'):
 	print('Predicted : '+str([labels[x] for x in indices]))
 	print('Ground Truth : '+str([labels[x] for x in y_test[lb:ub,0]]))
 	#show_imgs(x_test[lb:ub])
-	
+
 def evaluate(model_path='cnn_autoencoder.h5', num_classes=10):
 	trainX, trainy, testX, testy = load_data()
 	model = load_model(model_path)
 	test_eval = model.evaluate(testX, testy, verbose=1)
 	print('Test loss:', test_eval[0])
 	print('Test accuracy:', test_eval[1])
-	
+
 	predicted_classes = model.predict(testX)
 	predicted_classes = np.argmax(np.round(predicted_classes),axis=1)
 	class_labels = np.argmax(np.round(testy), axis=1)
 	#print('test class : ',predicted_classes[0])
 	predicted_classes = np.reshape(predicted_classes,(len(testy),1))
 	class_labels = np.reshape(class_labels, (len(testy),1))
-	
+
 	print(predicted_classes.shape, ' ----- ', class_labels.shape)
-	
+
 	correct = np.where(predicted_classes==class_labels)[0]
-	
+
 	print("Found %d correct labels" % len(correct))
 	for i, correct in enumerate(correct[:9]):
 		plt.subplot(3,3,i+1)
 		plt.imshow(testX[correct].reshape(32,32,3), cmap='gray', interpolation='none')
 		plt.title("Predicted {}, Class {}".format(predicted_classes[correct], testy[correct]))
 		plt.tight_layout()
-	
+
 	incorrect = np.where(predicted_classes!=class_labels)[0]
 	print("Found %d incorrect labels" % len(incorrect))
 	for i, incorrect in enumerate(incorrect[:9]):
@@ -101,13 +101,13 @@ def evaluate(model_path='cnn_autoencoder.h5', num_classes=10):
 		plt.imshow(testX[incorrect].reshape(32,32,3), cmap='gray', interpolation='none')
 		plt.title("Predicted {}, Class {}".format(predicted_classes[incorrect], testy[incorrect]))
 		plt.tight_layout()
-	
+
 	target_names = ["Class {}".format(i) for i in range(num_classes)]
 	report = classification_report(class_labels, predicted_classes, target_names=target_names, output_dict=True)
 	save_report(report)
 	print(report)
 
-class Classification():
+class Classification(object):
 	def __init__(self, trainX, trainy, testX, testy, batch_size=64, epochs=100, size=(32,32), chan=3,lr=0.001):
 		self.trainX = trainX
 		self.trainy = trainy
@@ -119,7 +119,7 @@ class Classification():
 		self.lr = lr
 		self.x, self.y = size
 		self.input_img = Input(shape = (self.x, self.y, self.inChannel))
-	
+
 	def feature_extraction(self, model_path = None) :
 		autoencoder = Model(self.input_img, decoder(encoder(self.input_img)))
 		autoencoder.compile(loss='mean_squared_error', optimizer = RMSprop(lr=self.lr))
@@ -137,7 +137,7 @@ class Classification():
 			it_train = datagen.flow(self.trainX, self.trainX, batch_size=64)
 			# fit model
 			steps = int(self.trainX.shape[0] / 64)
-			autoencoder_train = autoencoder.fit_generator(it_train, 
+			autoencoder_train = autoencoder.fit_generator(it_train,
 												steps_per_epoch=steps,
 												epochs=self.epochs,
 												verbose=1,
@@ -149,14 +149,14 @@ class Classification():
 		else :
 			autoencoder_train = load_model(model_path)
 		return autoencoder, autoencoder_train
-	
+
 	def classifier(self, autoencoder=None):
 		encode = encoder(self.input_img)
 		model = Model(self.input_img,cnn_model(encode=encode)) if autoencoder != None else Model(self.input_img,cnn_model(self.input_img))
 		#model.initializer.
 		if autoencoder == None :
 			print('Train CNN Only')
-			model.compile(loss=keras.losses.categorical_crossentropy, 
+			model.compile(loss=keras.losses.categorical_crossentropy,
 						  optimizer=keras.optimizers.Adam(lr=self.lr),
 						  metrics=['accuracy'])
 			model.summary()
@@ -168,8 +168,8 @@ class Classification():
 			steps = int(self.trainX.shape[0] / 64)
 			model_train = model.fit_generator(it_train,
 									   steps_per_epoch=steps,
-									   epochs=100, 
-									   verbose=1, 
+									   epochs=100,
+									   verbose=1,
 									   validation_data=(self.testX, self.testy))
 			with open('cnn_hist.json','w') as f:
 				json.dump(model_train.history,f)
@@ -180,7 +180,7 @@ class Classification():
 				l1.set_weights(l2.get_weights())
 			for layer in model.layers[0:19]:
 				layer.trainable = True
-			model.compile(loss=keras.losses.categorical_crossentropy, 
+			model.compile(loss=keras.losses.categorical_crossentropy,
 						  optimizer=keras.optimizers.Adam(lr=self.lr),
 						  metrics=['accuracy'])
 			model.summary()
@@ -192,14 +192,14 @@ class Classification():
 			steps = int(self.trainX.shape[0] / 64)
 			model_train = model.fit_generator(it_train,
 									   steps_per_epoch=steps,
-									   epochs=100, 
-									   verbose=1, 
+									   epochs=100,
+									   verbose=1,
 									   validation_data=(self.testX, self.testy))
 			with open('cnn_autoencoder_hist.json','w') as f:
 				json.dump(model_train.history,f)
 			model.save('cnn_autoencoder.h5')
 			return model_train
-		
+
 if __name__ == "__main__":
 	parse = argparse.ArgumentParser()
 	parse.add_argument('--train', dest='train',action='store_true',help='Train mode')
@@ -212,16 +212,16 @@ if __name__ == "__main__":
 	parse.add_argument('-l',dest='lb',default=0,type=int,help='lower index for cifar-10 dataset testing')
 	parse.add_argument('-u',dest='ub',default=16,type=int,help='upper index for cifar-10 dataset testing')
 	parse.add_argument('-n',dest='fname',default='intermediate_activation',help='directory name to save intermediate activateion images')
-	
+
 	args = parse.parse_args()
-	
+
 	if args.train :
 		print('-'*30)
 		print('Train Mode')
 		print('-'*30)
 		trainX, trainy, testX, testy = load_data()
 		#train(trainX, trainy, testX, testy)
-		
+
 		run = Classification(trainX=trainX,
 						 trainy=trainy,
 						 testX=testX,
@@ -237,7 +237,7 @@ if __name__ == "__main__":
 				summarize_diagnostics(hst, model='autoencoder')
 			hist = run.classifier(autoencoder=encoder_w)
 			summarize_diagnostics(hist, model='cnn_autoencoder')
-		
+
 	elif args.test :
 		print('-'*30)
 		print('Test Mode')
